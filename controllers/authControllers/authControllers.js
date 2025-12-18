@@ -1,0 +1,59 @@
+const { sendErrorResponse } = require("../../helpers/errorHandlers/errorHandlers");
+const User = require("../../models/User");
+const bcrypt = require("bcrypt")
+const jwt = require("jsonwebtoken")
+
+const userRegister = async (req, res) => {
+    try {
+        const { email, password, fullName } = req.body;
+        let user = await User.findOne({ emailId: email });
+        if (user) {
+            return res
+                .status(400)
+                .json({ success: false, data: "Admin already exists" });
+        }
+        let hashedPassword = await bcrypt.hash(password, 10);
+        await User.create({
+            fullName: fullName,
+            email: email.toLowerCase(),
+            password: hashedPassword
+        });
+        return res
+            .status(200)
+            .json({ success: true, data: "User Registered" });
+    } catch (error) {
+        console.error(error)
+        return res.status(500).json({ success: false, data: "Internal Server Error" });
+    }
+};
+
+const userLogin = async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        console.log(email, password)
+        if (!email) sendErrorResponse(res, 400, "Email is required");
+        if (!password) sendErrorResponse(res, 400, "Password is required");
+
+        let user = await User.findOne({ email }).select("+password");
+
+        const isPasswordCorrect = await bcrypt.compare(password, user.password);
+
+        if (!isPasswordCorrect || !user) {
+            return sendErrorResponse(res, 400, "Invalid Email Id or Password");
+        }
+        const token = jwt.sign(
+            { id: user._id, role: user.role },
+            process.env.JWT_SECRET,
+            // { expiresIn: "1h" }
+        );
+        return res.status(200).json({ success: true, data: token });
+    } catch (error) {
+        console.log(error);
+        return sendErrorResponse(res, 500, "Internal Server Error");
+    }
+}
+
+module.exports = {
+    userRegister,
+    userLogin
+}
