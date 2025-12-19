@@ -35,11 +35,12 @@ const userLogin = async (req, res) => {
         if (!password) sendErrorResponse(res, 400, "Password is required");
 
         let user = await User.findOne({ email }).select("+password");
+        if (!user) return sendErrorResponse(res, 400, "Invalid Email or Password");
 
         const isPasswordCorrect = await bcrypt.compare(password, user.password);
 
-        if (!isPasswordCorrect || !user) {
-            return sendErrorResponse(res, 400, "Invalid Email Id or Password");
+        if (!isPasswordCorrect) {
+            return sendErrorResponse(res, 400, "Invalid Email or Password");
         }
         const token = jwt.sign(
             { id: user._id, role: user.role },

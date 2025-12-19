@@ -60,7 +60,7 @@ const getTask = async (req, res) => {
             query.title = { $regex: search, $options: "i" };
         }
         const allTasks = await Task.find(query).skip((page - 1) * limit).limit(limit);
-        const count = await Task.countDocuments();
+        const count = await Task.countDocuments({userID: user._id});
         return res.status(200).json({ success: true, data: {taskList: allTasks, count} })
     } catch (error) {
         console.error(error);
