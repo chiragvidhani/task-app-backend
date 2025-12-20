@@ -60,20 +60,20 @@ const getTask = async (req, res) => {
             query.title = { $regex: search, $options: "i" };
         }
         const allTasks = await Task.find(query).skip((page - 1) * limit).limit(limit);
-        const count = await Task.countDocuments({userID: user._id});
-        return res.status(200).json({ success: true, data: {taskList: allTasks, count} })
+        const count = await Task.countDocuments({ userID: user._id });
+        return res.status(200).json({ success: true, data: { taskList: allTasks, count } })
     } catch (error) {
         console.error(error);
         return res.status(500).json({ success: false, data: "Internal Server Error" });
     }
 };
 
-const editTask = async(req,res) => {
+const editTask = async (req, res) => {
     try {
         const user = await User.findById(req.user.id);
         if (!user) return sendErrorResponse(res, 400, "User not found");
 
-        const {taskID} = req.query;
+        const { taskID } = req.query;
 
         const { title,
             description,
@@ -81,15 +81,15 @@ const editTask = async(req,res) => {
             priority,
             dueDate } = req.body;
 
-            const updateData = {
-                title,
-                description,
-                status,
-                priority,
-                dueDate
-            }
+        const updateData = {
+            title,
+            description,
+            status,
+            priority,
+            dueDate
+        }
 
-        const existingTask = await Task.findOneAndUpdate({_id: taskID},{$set: updateData}, {new: true})
+        const existingTask = await Task.findOneAndUpdate({ _id: taskID }, { $set: updateData }, { new: true })
 
         if (!existingTask) return sendErrorResponse(res, 400, "Task not found");
 
@@ -100,19 +100,41 @@ const editTask = async(req,res) => {
     }
 };
 
-const deleteTask = async(req,res) => {
+const deleteTask = async (req, res) => {
     try {
-        const {taskID} = req.query
+        const { taskID } = req.query
         const user = await User.findById(req.user.id);
         if (!user) return sendErrorResponse(res, 400, "User not found");
 
-        const existingTask = await Task.findOneAndDelete({_id: taskID, userID: user._id});
+        const existingTask = await Task.findOneAndDelete({ _id: taskID, userID: user._id });
         if (!existingTask) return sendErrorResponse(res, 400, "Task not found");
 
-        return res.status(200).json({success: true, data: "Task deleted successfully"});
+        return res.status(200).json({ success: true, data: "Task deleted successfully" });
     } catch (error) {
         console.error(error)
-        return res.status(500).json({success: false, data: "Internal Server Error"})
+        return res.status(500).json({ success: false, data: "Internal Server Error" })
+    }
+}
+
+const getTaskSummary = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        if (!user) return sendErrorResponse(res, 400, "User not found");
+
+        const task = await Task.find({ userID: user._id });
+
+        const summary = {
+            completedTasks: task.filter(t => t.status === "completed").length,
+            pendingTasks: task.filter(t => t.status === "pending").length,
+            highPriority: task.filter(t => t.priority === "high").length,
+            highPriority: task.filter(t => t.priority === "medium").length,
+            lowPriority: task.filter(t => t.priority === "low").length,
+        };
+
+        return res.status(200).json({ success: true, data: summary })
+    } catch (error) {
+        console.error(error);
+        return res.status(200).json({ success: false, data: "Internal Server Error" });
     }
 }
 
@@ -120,5 +142,6 @@ module.exports = {
     createTask,
     getTask,
     editTask,
-    deleteTask
+    deleteTask,
+    getTaskSummary
 }

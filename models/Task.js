@@ -25,9 +25,11 @@ const taskSchema = new Schema({
     userID: {
         type: Schema.Types.ObjectId,
         required: true
-    }
+    },
 
-});
+},
+    { timestamps: true }
+);
 
 const Task = mongoose.model("task", taskSchema);
 module.exports = Task;
