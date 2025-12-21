@@ -7,17 +7,14 @@ const userRegister = async (req, res) => {
     try {
         const { email, password, fullName } = req.body;
         let user = await User.findOne({ email });
-        if (user) {
-            return res
-                .status(400)
-                .json({ success: false, data: "User already exists" });
-        }
+        if (user) return sendErrorResponse(res, 400, "User already exists!")
         let hashedPassword = await bcrypt.hash(password, 10);
-        await User.create({
+        let newUser = await User.create({
             fullName: fullName,
             email: email.toLowerCase(),
             password: hashedPassword
         });
+        if (!newUser) return sendErrorResponse(res, 400, "Unknown error. User cannot be created.")
         return res
             .status(200)
             .json({ success: true, data: "User Registered" });
