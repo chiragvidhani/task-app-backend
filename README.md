@@ -6,7 +6,7 @@ Firstly, Clone the repository
 
 Navigate to the project folder
 
-`cd node-express-todo-app`
+`cd task-app-backend`
 
 Install dependencies
 
